@@ -125,7 +125,7 @@ label {
 
 .item-container {
   height: 552px;
-  overflow-y: scroll;
+  overflow-y: hidden;
   position: relative;
   -ms-overflow-style: none;
 }

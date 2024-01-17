@@ -22,6 +22,7 @@ const playAgainBtn = document.querySelector('.play-again');
 let questionAmount = 0
 let equationsArray = [];
 let playerGuessArray = []
+let bestScoreArray = []
 
 // Game Page
 let firstNumber = 0;
@@ -35,14 +36,72 @@ let timePlayed = 0
 let baseTime = 0
 let penaltyTime = 0
 let finalTime = 0
-let finalTimeDisplay = '0.0s'
 
 // Scroll
 let valueY = 0
 
+function bestScoresToDOM() {
+  bestScores.forEach((bs, i) => {
+    const bestScoreEl = bs
+    bestScoreEl.textContent = `${bestScoreArray[i].bestScore}s`
+  })
+}
+
+function getSavedBestScores() {
+  if(localStorage.getItem('bestScores')) {
+    bestScoreArray = JSON.parse(localStorage.getItem('bestScores'))
+  } else {
+    bestScoreArray = [
+      { questions: 10, bestScore: `0.0`},
+      { questions: 25, bestScore: `0.0`},
+      { questions: 50, bestScore: `0.0`},
+      { questions: 99, bestScore: `0.0`}
+    ]
+    localStorage.setItem('bestScores', JSON.stringify(bestScoreArray))
+  }
+  bestScoresToDOM()
+}
+
+function updateBestScore() {
+  bestScoreArray.forEach((score, i) => {
+    if (questionAmount == score.questions) {
+      const savedBestScore = Number(bestScoreArray[i].bestScore)
+      if (savedBestScore === 0 || savedBestScore > finalTime) {
+        bestScoreArray[i].bestScore = finalTime
+      }
+    }
+  })
+  bestScoresToDOM()
+  localStorage.setItem('bestScores', JSON.stringify(bestScoreArray))
+}
+
+function playAgain() {
+  scorePage.hidden = true
+  splashPage.hidden = false
+  equationsArray = []
+  playerGuessArray = []
+  valueY = 0
+}
+
+function showScorePage() {
+  scorePage.hidden = false
+  gamePage.hidden = true
+}
+
+function scoresToDOM() {
+  finalTime = finalTime.toFixed(2)
+  baseTime = timePlayed.toFixed(2)
+  penaltyTime = penaltyTime.toFixed(2)
+
+  baseTimeEl.textContent = `Base Time: ${baseTime}s`
+  penaltyTimeEl.textContent = `Penalty: +${penaltyTime}s`
+  finalTimeEl.textContent = `${finalTime}s`
+  updateBestScore()
+  itemContainer.scrollTo({ top: 0, behaviour: 'instant'})
+  showScorePage()
+}
+
 function checkTime() {
-  console.log(playerGuessArray)
-  console.log(questionAmount)
   if(playerGuessArray.length == questionAmount) {
     clearInterval(timer)
     equationsArray.forEach((eq, i) => {
@@ -53,7 +112,7 @@ function checkTime() {
       }
     })
     finalTime = timePlayed + penaltyTime
-    console.log('Time', timePlayed, 'penalty',penaltyTime,'final',finalTime)
+    scoresToDOM()
   }
 }
 
@@ -67,7 +126,6 @@ function startTimer() {
   penaltyTime = 0
   finalTime = 0
   timer = setInterval(addTime, 100)
-  console.log('Time Started')
 }
 
 function select(guessedTrue) {
@@ -92,10 +150,8 @@ function getRandomInt(max) {
 function createEquations() {
   // Randomly choose how many correct equations there should be
   const correctEquations = getRandomInt(questionAmount)
-  console.log(correctEquations)
   // Set amount of wrong equations
   const wrongEquations = questionAmount - correctEquations
-  console.log(wrongEquations)
   // Loop through, multiply random numbers up to 9, push to array
   for (let i = 0; i < correctEquations; i++) {
     firstNumber = getRandomInt(9)
@@ -208,3 +264,5 @@ startForm.addEventListener('click', () => {
 })
 
 startForm.addEventListener('submit', selectQuestionAmount)
+
+getSavedBestScores()
